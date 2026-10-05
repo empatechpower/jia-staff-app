@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "jia-staff-app",
-    "slug": "jia-staff-app",
+    "name": "JIA Staff",
+    "slug": "jia-staff",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,6 +20,23 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Used to confirm you're at the office or project site when clocking in."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Used to photograph petty cash receipts.",
+          "photosPermission": "Used to attach petty cash receipts from your photos."
+        }
+      ],
+      "expo-document-picker"
+    ]
   }
 }
