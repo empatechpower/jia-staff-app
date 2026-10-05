@@ -6,11 +6,13 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { fmtTime } from "../lib/format";
 import { colors } from "../lib/theme";
+import { useT } from "../lib/i18n";
 import { loadProjects, type Project } from "../lib/projects";
 import { distanceInMeters, isWithinRadius, nearestDistance, OFFICE_LOCATION, GEOFENCE_RADIUS_METERS, type LatLng } from "../lib/geo";
 
 const LOCATIONS = ["On Site", "Office", "WFH"] as const;
 type Location_ = (typeof LOCATIONS)[number];
+const LOC_KEY = { "On Site": "loc_onsite", "Office": "loc_office", "WFH": "loc_wfh" } as const;
 
 import type { RootStackParamList as RootParams } from "../navigation";
 
@@ -18,6 +20,7 @@ type GpsState = { status: "requesting" | "obtained" | "denied"; coords: LatLng |
 
 export default function StartDayScreen({ navigation }: NativeStackScreenProps<RootParams, "StartDay">) {
   const { staffId } = useAuth();
+  const { t } = useT();
   const [location, setLocation] = useState<Location_>("On Site");
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState("");
@@ -58,12 +61,12 @@ export default function StartDayScreen({ navigation }: NativeStackScreenProps<Ro
   const geofenced = isOffice || isOnSite;
 
   let blockReason = "";
-  if (geofenced && gps.status !== "obtained") blockReason = "Location is required to clock in here.";
-  else if (isOnSite && !projectId) blockReason = "Select a project first.";
+  if (geofenced && gps.status !== "obtained") blockReason = t("gpsRequired");
+  else if (isOnSite && !projectId) blockReason = t("selectProjectFirst");
   else if (isOnSite && selectedProject && selectedProject.sites.length === 0)
-    blockReason = "This project has no site location saved.";
+    blockReason = t("noSiteSaved");
   else if (geofenced && distance !== null && !isWithinRadius(distance))
-    blockReason = `You're ${Math.round(distance)}m away — must be within ${GEOFENCE_RADIUS_METERS}m.`;
+    blockReason = `${Math.round(distance)}m · ${t("mustBeWithin")} ${GEOFENCE_RADIUS_METERS}m`;
   const canClockIn = !submitting && blockReason === "";
 
   async function clockIn() {
@@ -81,7 +84,7 @@ export default function StartDayScreen({ navigation }: NativeStackScreenProps<Ro
       });
       navigation.goBack();
     } catch (e: any) {
-      setError(e?.message ?? "Could not clock in. Please try again.");
+      setError(e?.message ?? t("submitError"));
     } finally {
       setSubmitting(false);
     }
@@ -90,18 +93,18 @@ export default function StartDayScreen({ navigation }: NativeStackScreenProps<Ro
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.card}>
-        <Text style={styles.title}>Start My Day</Text>
+        <Text style={styles.title}>{t("startMyDay")}</Text>
 
-        <Text style={styles.label}>Location</Text>
+        <Text style={styles.label}>{t("location")}</Text>
         <View style={styles.chipRow}>
           {LOCATIONS.map((l) => (
-            <Chip key={l} label={l} selected={location === l} onPress={() => setLocation(l)} />
+            <Chip key={l} label={t(LOC_KEY[l])} selected={location === l} onPress={() => setLocation(l)} />
           ))}
         </View>
 
         {isOnSite && (
           <>
-            <Text style={styles.label}>Project <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>{t("project")} <Text style={styles.required}>*</Text></Text>
             <View style={styles.chipRow}>
               {projects.map((p) => (
                 <Chip key={p.id} label={p.name} selected={projectId === p.id} onPress={() => setProjectId(p.id)} />
@@ -111,16 +114,16 @@ export default function StartDayScreen({ navigation }: NativeStackScreenProps<Ro
         )}
 
         <View style={styles.gpsBox}>
-          {gps.status === "requesting" && <Text style={styles.muted}>Detecting location…</Text>}
-          {gps.status === "denied" && <Text style={styles.danger}>Location access denied.</Text>}
+          {gps.status === "requesting" && <Text style={styles.muted}>{t("detecting")}</Text>}
+          {gps.status === "denied" && <Text style={styles.danger}>{t("gpsDenied")}</Text>}
           {gps.status === "obtained" && geofenced && distance !== null && (
             <Text style={isWithinRadius(distance) ? styles.success : styles.danger}>
               {isWithinRadius(distance)
-                ? `Within range — ${Math.round(distance)}m.`
-                : `${Math.round(distance)}m away — must be within ${GEOFENCE_RADIUS_METERS}m.`}
+                ? `${t("withinRange")} — ${Math.round(distance)}m.`
+                : `${Math.round(distance)}m · ${t("mustBeWithin")} ${GEOFENCE_RADIUS_METERS}m.`}
             </Text>
           )}
-          {gps.status === "obtained" && !geofenced && <Text style={styles.muted}>Location recorded.</Text>}
+          {gps.status === "obtained" && !geofenced && <Text style={styles.muted}>{t("locationRecorded")}</Text>}
         </View>
 
         {!!blockReason && <Text style={styles.danger}>{blockReason}</Text>}
@@ -128,7 +131,7 @@ export default function StartDayScreen({ navigation }: NativeStackScreenProps<Ro
 
         <View style={styles.footer}>
           <View>
-            <Text style={styles.muted}>Start time</Text>
+            <Text style={styles.muted}>{t("startTime")}</Text>
             <Text style={styles.bigTime}>{startTime}</Text>
           </View>
           <Pressable
@@ -136,7 +139,7 @@ export default function StartDayScreen({ navigation }: NativeStackScreenProps<Ro
             onPress={clockIn}
             disabled={!canClockIn}
           >
-            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Clock In</Text>}
+            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>{t("startDayBtn")}</Text>}
           </Pressable>
         </View>
       </View>

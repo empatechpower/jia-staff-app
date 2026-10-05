@@ -80,6 +80,24 @@ export const api = {
     }) => post<{ response: { entry_id: string } }>("/record_project_attendance", payload),
     endProjectAttendance: (payload: { entry_id: string; end_time: string }) =>
       post("/end_project_attendance", payload),
+    getStaffTimesheet: (staffId: string, month: number, year: number) => {
+      const from = `${year}-${String(month).padStart(2, "0")}-01`;
+      const next = new Date(year, month, 1);
+      const to = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`;
+      return get(`/get_staff_timesheet?staff_id=${staffId}&from_date=${from}&to_date=${to}`);
+    },
+    getLeaveEntitlements: (staffId: string) => get(`/get_leave_entitlements?staff_id=${staffId}`),
+    getLeaveHistory: (staffId: string, cursor = 0, limit = 100) =>
+      get(`/get_leave_history?staff_id=${staffId}&cursor=${cursor}&limit=${limit}`),
+    getStaffLeaveRequests: (staffId: string, cursor = 0, limit = 100) =>
+      get(`/get_staff_leave_requests?staff_id=${staffId}&cursor=${cursor}&limit=${limit}`),
+    submitLeaveRequest: (payload: Record<string, any>) => post("/submit_leave_request", payload),
+    getStaffPettyCashClaims: (staffId: string, cursor = 0, limit = 100) =>
+      get(`/get_staff_petty_cash_claims?staff_id=${staffId}&cursor=${cursor}&limit=${limit}`),
+    submitPettyCashClaim: (payload: Record<string, any>) => post("/submit_petty_cash_claim", payload),
+    updatePettyCashClaim: (claimId: string, payload: Record<string, any>) =>
+      post("/update_petty_cash_claim", { claim_id: claimId, ...payload }),
+    getAllSuppliers: () => get("/get_all_suppliers"),
   },
 };
 
